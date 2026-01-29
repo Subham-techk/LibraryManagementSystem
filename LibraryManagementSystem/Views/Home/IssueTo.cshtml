@@ -1,0 +1,162 @@
+﻿@{
+    ViewData["Title"] = "IssueTo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    body {
+        background-color: #f5f7ff;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .table {
+        margin-bottom: 0;
+        background: white;
+    }
+
+        .table th {
+            background: #f1f5f9;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            color: #64748b;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        .table tr:hover {
+            background-color: #f8fafc;
+        }
+
+    .btn-sm {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+
+    .modal-header {
+        border-bottom: none;
+        padding: 1.5rem 1.5rem 0.5rem;
+    }
+
+    .modal-body {
+        padding: 0 1.5rem 1.5rem;
+    }
+
+    .form-control {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #cbd5e1;
+    }
+
+        .form-control:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 0.25rem rgba(99,102,241,0.15);
+        }
+</style>
+<div class="container">
+    <div class="card mx-auto" style="max-width: 1100px;">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-4 px-4">
+            <h4 class="mb-0 fw-semibold text-dark">Book Management</h4>
+            <button class="btn btn-primary rounded-pill px-4"
+                    data-bs-toggle="modal" data-bs-target="#addModal">
+                <i class="bi bi-plus-lg me-1"></i> Add Book
+            </button>
+        </div>
+
+        <div class="table-responsive px-4 pb-4">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>SR.No</th>
+                        <th>Book Title</th>
+                        <th>Issued To</th>
+                        <th>Issue Date</th>
+                        <th>Return Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var Sr = 1;
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-medium">@Sr</td>
+                            <td>@item.Book?.Title</td>
+                            <td>@item.IssuedTo</td>
+                            <td>@item.IssueDate.ToShortDateString()</td>
+                            <td>@item.ReturnDate?.ToShortDateString()</td>
+                            <td class="text-end">
+                                @{if(@item.IsReturned ){
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-outline-primary btn-sm text-danger border-0">
+                                                <i class="bi bi-bookmark-minus"></i> Returned
+                                            </button>
+                                        </div>
+                                }
+                                else{
+                                    <div class="btn-group" role="group">
+                                    <button class="btn btn-outline-primary btn-sm border-0"
+                                            onclick="returnBook(@item.Id)">
+                                        <i class="bi bi-bookmark-minus"></i> Return
+                                    </button>
+                                </div>
+                                }
+                                }
+                            </td>
+                        </tr>
+                        Sr++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function returnBook(id) {
+            Swal.fire({
+                title: 'Return Book?',
+                text: "This book will be marked as returned!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, Return it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/Home/ReturnBook', { id: id }, function (res) {
+                        if (res === true) {
+                            Swal.fire('Returned!','Book returned successfully.','success').then(() => {
+                                location.reload();
+                            });
+                        }
+                        else {
+                            Swal.fire('Error!','Something went wrong.','error'
+                            );
+                        }
+
+                    });
+                }
+            });
+        }
+
+</script>
+
+

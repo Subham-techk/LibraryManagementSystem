@@ -1,0 +1,276 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+<style>
+    body {
+        background-color: #f5f7ff;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .table {
+        margin-bottom: 0;
+        background: white;
+    }
+
+        .table th {
+            background: #f1f5f9;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            color: #64748b;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        .table tr:hover {
+            background-color: #f8fafc;
+        }
+
+    .btn-sm {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+
+    .modal-header {
+        border-bottom: none;
+        padding: 1.5rem 1.5rem 0.5rem;
+    }
+
+    .modal-body {
+        padding: 0 1.5rem 1.5rem;
+    }
+
+    .form-control {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #cbd5e1;
+    }
+
+        .form-control:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 0.25rem rgba(99,102,241,0.15);
+        }
+</style>
+<div class="container">
+    <div class="card mx-auto" style="max-width: 1100px;">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-4 px-4">
+            <h4 class="mb-0 fw-semibold text-dark">Book Management</h4>
+            <button class="btn btn-primary rounded-pill px-4"
+                    data-bs-toggle="modal" data-bs-target="#addModal">
+                <i class="bi bi-plus-lg me-1"></i> Add Book
+            </button>
+        </div>
+
+        <div class="table-responsive px-4 pb-4">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>SR.No</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Available</th>
+                        <th>Issued</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var Sr = 1;
+                    }
+                    @foreach (var b in Model)
+                    {
+                        <tr>
+                            <td class="fw-medium">@Sr</td>
+                            <td class="fw-medium">@b.Title</td>
+                            <td>@b.Author</td>
+                            <td><span class="badge bg-success-subtle text-success">@b.AvailableCopies</span></td>
+                            <td><span class="badge bg-danger-subtle text-danger">@(b.TotalCopies - b.AvailableCopies)</span></td>
+                            <td class="text-end">
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-outline-warning btn-sm border-0"
+                                            onclick="openEdit(@b.Id,'@b.Title','@b.Author',@b.TotalCopies)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm border-0"
+                                            onclick="openIssue(@b.Id)">
+                                        <i class="bi bi-bookmark-plus"></i> Issue
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm border-0"
+                                            onclick="confirmDelete(@b.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        Sr++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold" id="addModalLabel">Add New Book</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="title" class="form-label fw-medium">Title</label>
+                    <input id="title" class="form-control" placeholder="Enter book title" />
+                </div>
+                <div class="mb-3">
+                    <label for="author" class="form-label fw-medium">Author</label>
+                    <input id="author" class="form-control" placeholder="Enter author name" />
+                </div>
+                <div class="mb-3">
+                    <label for="copies" class="form-label fw-medium">Total Copies</label>
+                    <input id="copies" class="form-control" type="number" placeholder="e.g. 5" min="1" />
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="addBook()">Save Book</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal (similar structure) -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">Edit Book</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId" />
+                <div class="mb-3">
+                    <label for="editTitle" class="form-label fw-medium">Title</label>
+                    <input id="editTitle" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="editAuthor" class="form-label fw-medium">Author</label>
+                    <input id="editAuthor" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="editCopies" class="form-label fw-medium">Total Copies</label>
+                    <input id="editCopies" class="form-control" type="number" min="1" />
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="editBook()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Issue Modal -->
+<div class="modal fade" id="issueModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">Issue Book</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="issueBookId" />
+                <div class="mb-3">
+                    <label for="issuedTo" class="form-label fw-medium">Issued To (Name / ID)</label>
+                    <input id="issuedTo" class="form-control" placeholder="Enter borrower name or ID" />
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="issueBook()">Issue Now</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addBook() {
+        $.post('/Home/AddBook', {
+            Title: $('#title').val(),
+            Author: $('#author').val(),
+            TotalCopies: $('#copies').val()
+        }, () => location.reload());
+    }
+
+    function openEdit(id,title,author,copies) {
+        $('#editId').val(id);
+        $('#editTitle').val(title);
+        $('#editAuthor').val(author);
+        $('#editCopies').val(copies);
+        new bootstrap.Modal('#editModal').show();
+    }
+
+    function editBook() {
+        $.post('/Home/EditBook', {
+            Id: $('#editId').val(),
+            Title: $('#editTitle').val(),
+            Author: $('#editAuthor').val(),
+            TotalCopies: $('#editCopies').val()
+        }, () => location.reload());
+    }
+
+    function openIssue(id) {
+        $('#issueBookId').val(id);
+        new bootstrap.Modal('#issueModal').show();
+    }
+
+    function issueBook() {
+        $.post('/Home/IssueBook', {
+            bookId: $('#issueBookId').val(),
+            issuedTo: $('#issuedTo').val()
+        }, () => location.reload());
+    }
+           function confirmDelete(id) {
+        Swal.fire({
+            title: 'Delete Book?',
+            text: "This action cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+                $.post('/Home/DeleteBook', { id: id }, function (res) {
+                    Swal.fire('Deleted!','Book has been deleted successfully.','success').then(() => {
+                        location.reload();
+                    });
+
+                }).fail(function () {
+                    Swal.fire('Error!','Unable to delete the book.','error');
+                });
+
+            }
+        });
+    }
+
+</script>
+ 
